@@ -31,6 +31,7 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
   const baseRef = useRef<TileLayer<TileSource> | null>(null);
   const labelsRef = useRef<TileLayer<TileSource> | null>(null);
   const cadastralRef = useRef<TileLayer<TileWMS> | null>(null);
+  const cadastralEnabledRef = useRef(false);
 
   useEffect(() => {
     const targetElement = target.current;
@@ -89,13 +90,14 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
 
     // The current real BhuNaksha WMS configuration is a Pune-area village map.
     // When enabled, move the view to that source area so the user can immediately see it.
-    if (enabled && !activeLayers.includes("places")) {
+    if (enabled && !cadastralEnabledRef.current) {
       map.getView().animate({
         center: fromLonLat([73.8567, 18.5204]),
         zoom: 12.5,
         duration: 450,
       });
     }
+    cadastralEnabledRef.current = enabled;
   }, [activeLayers]);
 
   useEffect(() => {
