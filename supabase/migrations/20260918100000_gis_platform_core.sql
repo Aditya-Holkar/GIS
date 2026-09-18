@@ -337,3 +337,33 @@ for select to authenticated using (gis.is_workspace_member(workspace_id));
 grant usage on schema gis to authenticated;
 grant select, insert, update, delete on all tables in schema gis to authenticated;
 grant usage, select on sequence gis.audit_logs_id_seq to authenticated;
+
+
+-- PostgREST exposes public by default. Thin invoker wrappers keep the GIS schema
+-- private while allowing authenticated clients to call the spatial primitives.
+create or replace function public.gis_features_in_view(
+  p_dataset_id uuid, p_min_lon double precision, p_min_lat double precision,
+  p_max_lon double precision, p_max_lat double precision, p_limit integer default 5000
+)
+returns table (id uuid, external_id text, properties jsonb, geojson jsonb)
+language sql stable set search_path = ''
+as $$ select * from gis.features_in_view(p_dataset_id, p_min_lon, p_min_lat, p_max_lon, p_max_lat, p_limit); $$;
+
+create or replace function public.gis_nearby_features(
+  p_dataset_id uuid, p_lon double precision, p_lat double precision,
+  p_radius_meters double precision default 10000, p_limit integer default 100
+)
+returns table (id uuid, external_id text, properties jsonb, distance_meters double precision, geojson jsonb)
+language sql stable set search_path = ''
+as $$ select * from gis.nearby_features(p_dataset_id, p_lon, p_lat, p_radius_meters, p_limit); $$;
+
+create or replace function public.gis_feature_distance(
+  p_dataset_id uuid, p_feature_a uuid, p_feature_b uuid
+)
+returns double precision
+language sql stable set search_path = ''
+as $$ select gis.feature_distance(p_dataset_id, p_feature_a, p_feature_b); $$;
+
+grant execute on function public.gis_features_in_view(uuid,double precision,double precision,double precision,double precision,integer) to authenticated;
+grant execute on function public.gis_nearby_features(uuid,double precision,double precision,double precision,integer) to authenticated;
+grant execute on function public.gis_feature_distance(uuid,uuid,uuid) to authenticated;
