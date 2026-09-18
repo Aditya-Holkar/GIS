@@ -48,7 +48,10 @@ export default function Home() {
   const [sidebar, setSidebar] = useState(true);
   const [activeLayers, setActiveLayers] = useState(layers.map(l => l.id));
   const [view3d, setView3d] = useState(false);
-  const [basemap, setBasemap] = useState<Basemap>("streets");\n  const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");\n  const [mapMessage, setMapMessage] = useState("Ready");\n  const [search, setSearch] = useState("");
+  const [basemap, setBasemap] = useState<Basemap>("streets");
+  const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");
+  const [mapMessage, setMapMessage] = useState("Ready");
+  const [search, setSearch] = useState("");
 
   const toggleLayer = (id: string) =>
     setActiveLayers(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
