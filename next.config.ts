@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    optimizePackageImports: ["lucide-react"],
-  },
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+  experimental: { optimizePackageImports: ["lucide-react"] },
 };
 
 export default nextConfig;
