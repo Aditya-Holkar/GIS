@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetch(targets[level], {
-      method: "GET",
+      method: "POST",
       headers: { Accept: "application/json" },
       next: { revalidate: 86400 },
     });
