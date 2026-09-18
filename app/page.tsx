@@ -77,7 +77,7 @@ export default function Home() {
       name: String(item.districtNameEnglish ?? item.subdistrictNameEnglish ?? item.villageNameEnglish ?? ""),
       localName: String(item.districtNameLocal ?? item.subdistrictNameLocal ?? item.villageNameLocal ?? ""),
     })).filter((item: LgdItem) => item.code && item.name);
-  };
+  }, []);
 
   useEffect(() => {
     setHierarchyLoading(true);
