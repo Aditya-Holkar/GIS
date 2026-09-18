@@ -49,7 +49,14 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
     editRef.current = editSource;
     const map = new Map({ target: target.current, layers: [createBasemap(basemap)], controls: [new Zoom(), new ScaleLine()], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }) });
     baseRef.current = map.getLayers().item(0) as TileLayer<any>;
-    const labels = new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }), zIndex: 100, visible: basemap !== "streets" });
+    const labels = new TileLayer({
+      source: new XYZ({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        attributions: "© Esri",
+      }),
+      zIndex: 100,
+      visible: basemap === "satellite",
+    });
     labelsRef.current = labels;
     map.addLayer(labels);
     mapRef.current = map;
@@ -63,6 +70,8 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
   }, [activeLayers]);
 
   useEffect(() => {
+    const labels = labelsRef.current;
+    if (labels) labels.setVisible(basemap === "satellite");
     const map = mapRef.current;
     if (!map) return;
     const next = createBasemap(basemap);
