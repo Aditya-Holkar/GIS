@@ -6,7 +6,7 @@ function safeSegment(value: string) {
 
 export async function POST(request: NextRequest) {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return NextResponse.json({ error: "Supabase server configuration missing" }, { status: 503 });
   const auth = request.headers.get("authorization");
   if (!auth?.toLowerCase().startsWith("bearer ")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   if (!body?.workspaceId || !body?.datasetId || !body?.filename) return NextResponse.json({ error: "workspaceId, datasetId and filename are required" }, { status: 400 });
   const path = `${safeSegment(body.workspaceId)}/${safeSegment(body.datasetId)}/original/${Date.now()}-${safeSegment(body.filename)}`;
   const response = await fetch(`${url}/storage/v1/object/upload/sign/gis-datasets/${path.split("/").map(encodeURIComponent).join("/")}`, {
-    method: "POST", headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    method: "POST", headers: { apikey: key, Authorization: auth, "Content-Type": "application/json" },
     body: JSON.stringify({ upsert: false }), cache: "no-store",
   });
   const text = await response.text(); let data: unknown; try { data = JSON.parse(text); } catch { data = { raw: text }; }
