@@ -4,11 +4,9 @@ import { useEffect, useRef } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
-import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
 import TileWMS from "ol/source/TileWMS";
-import VectorSource from "ol/source/Vector";
 import type TileSource from "ol/source/Tile";
 import ScaleLine from "ol/control/ScaleLine";
 import Zoom from "ol/control/Zoom";
@@ -33,7 +31,6 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
   const baseRef = useRef<TileLayer<TileSource> | null>(null);
   const labelsRef = useRef<TileLayer<TileSource> | null>(null);
   const cadastralRef = useRef<TileLayer<TileWMS> | null>(null);
-  const layerRefs = useRef<Record<string, VectorLayer<VectorSource>>>({});
 
   useEffect(() => {
     const targetElement = target.current;
@@ -75,13 +72,12 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
     cadastralRef.current = cadastral;
     map.addLayer(cadastral);
     mapRef.current = map;
-    return () => { map.setTarget(undefined); mapRef.current = null; layerRefs.current = {}; };
+    return () => { map.setTarget(undefined); mapRef.current = null; };
   // Map is initialized once; layer visibility and basemap changes are handled by dedicated effects.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    Object.entries(layerRefs.current).forEach(([id, layer]) => layer.setVisible(activeLayers.includes(id)));
     labelsRef.current?.setVisible(activeLayers.includes("places"));
 
     const cadastral = cadastralRef.current;
