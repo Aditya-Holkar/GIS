@@ -33,109 +33,22 @@ const india = {
 type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
-const indiaBounds = [[68.1, 8.0], [97.4, 8.0], [97.4, 35.7], [68.1, 35.7], [68.1, 8.0]];
-const stateShapes = [
-  [[68.1, 23.0], [74.0, 23.0], [74.0, 35.7], [68.1, 35.7], [68.1, 23.0]],
-  [[74.0, 20.0], [80.0, 20.0], [80.0, 30.0], [74.0, 30.0], [74.0, 20.0]],
-  [[80.0, 18.0], [88.0, 18.0], [88.0, 28.0], [80.0, 28.0], [80.0, 18.0]],
-  [[88.0, 20.0], [97.4, 20.0], [97.4, 29.0], [88.0, 29.0], [88.0, 20.0]],
-  [[72.0, 8.0], [82.0, 8.0], [82.0, 20.0], [72.0, 20.0], [72.0, 8.0]],
-];
-const cities = [
-  [73.8567, 18.5204, "Pune"], [72.8777, 19.076, "Mumbai"], [77.5946, 12.9716, "Bengaluru"],
-  [77.1025, 28.7041, "Delhi"], [80.2707, 13.0827, "Chennai"], [78.4867, 17.385, "Hyderabad"],
-  [88.3639, 22.5726, "Kolkata"], [75.7873, 26.9124, "Jaipur"], [73.0479, 26.2389, "Jodhpur"],
-  [72.5714, 23.0225, "Ahmedabad"], [76.7794, 30.7333, "Chandigarh"], [85.8245, 20.2961, "Bhubaneswar"],
-] as const;
-
-function featureCollection(features: object[]) {
-  return { type: "FeatureCollection", features };
-}
-
-function pointFeatures() {
-  return cities.map(([lon, lat, name]) => ({ type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties: { name } }));
-}
-
-function thematicFeatures(id: string) {
-  if (id === "boundaries") return featureCollection([{ type: "Feature", geometry: { type: "Polygon", coordinates: [indiaBounds] }, properties: { name: "India administrative extent" } }]);
-  if (id === "states" || id === "districts" || id === "postal") return featureCollection(stateShapes.map((coordinates, i) => ({ type: "Feature", geometry: { type: "Polygon", coordinates: [coordinates] }, properties: { name: id + " zone " + (i + 1) } })));
-  if (id === "roads") return featureCollection([
-    [[68.5, 23], [74, 19], [78, 22], [84, 21], [90, 24], [96, 27]],
-    [[72, 12], [76, 18], [80, 23], [84, 28], [90, 34]],
-    [[70, 30], [77, 27], [84, 26], [92, 29]],
-  ].map((coordinates, i) => ({ type: "Feature", geometry: { type: "LineString", coordinates }, properties: { name: "Road corridor " + (i + 1) } })));
-  if (id === "railways") return featureCollection([
-    [[72, 19], [77, 21], [80, 23], [85, 22], [89, 23]],
-    [[73, 13], [77, 18], [81, 24], [86, 29]],
-  ].map((coordinates, i) => ({ type: "Feature", geometry: { type: "LineString", coordinates }, properties: { name: "Rail corridor " + (i + 1) } })));
-  if (id === "water") return featureCollection([
-    { type: "Feature", geometry: { type: "LineString", coordinates: [[73, 30], [74, 27], [75, 24], [76, 20], [77, 16]] }, properties: { name: "River network" } },
-    { type: "Feature", geometry: { type: "LineString", coordinates: [[88, 30], [87, 27], [88, 24], [89, 21]] }, properties: { name: "River network" } },
-  ]);
-  if (id === "landcover" || id === "forest" || id === "elevation" || id === "population") return featureCollection(stateShapes.map((coordinates, i) => ({ type: "Feature", geometry: { type: "Polygon", coordinates: [coordinates] }, properties: { name: id + " zone " + (i + 1), value: (i + 1) * 20 } })));
-  if (["settlements", "airports", "health", "schools"].includes(id)) return featureCollection(pointFeatures());
-  return featureCollection([]);
-}
-
 function styleFor(id: string) {
-  const point = ["settlements", "airports", "health", "schools"].includes(id);
-  const line = ["roads", "railways", "water"].includes(id);
-  const polygon = ["boundaries", "states", "districts", "postal", "landcover", "forest", "elevation", "population"].includes(id);
-
-  const stroke =
-    id === "roads" ? "#f0b35a" :
-    id === "railways" ? "#d58cff" :
-    id === "water" ? "#4aa3ff" :
-    id === "forest" ? "#39d083" :
-    "#39d0a1";
-
   return (feature: any) => {
     const name = String(feature.get("name") ?? "");
-    const value = feature.get("value");
-    const label = value !== undefined ? `${name} · ${value}` : name;
-
-    if (point) {
-      return new Style({
-        image: new CircleStyle({
-          radius: id === "airports" ? 6 : 5,
-          fill: new Fill({ color: stroke }),
-          stroke: new Stroke({ color: "#06111d", width: 2 }),
-        }),
-        text: new Text({
-          text: label,
-          offsetY: -12,
-          font: "600 12px Inter, Arial, sans-serif",
-          fill: new Fill({ color: "#ffffff" }),
-          stroke: new Stroke({ color: "#06111d", width: 3 }),
-          overflow: true,
-        }),
-      });
-    }
-
-    if (polygon) {
-      return new Style({
-        fill: undefined,
-        stroke: id === "boundaries" ? new Stroke({ color: "#8de7ff", width: 2 }) : undefined,
-        text: new Text({
-          text: label,
-          font: "600 11px Inter, Arial, sans-serif",
-          fill: new Fill({ color: "#ffffff" }),
-          stroke: new Stroke({ color: "#06111d", width: 3 }),
-          overflow: true,
-          placement: "point",
-        }),
-      });
-    }
-
     return new Style({
-      stroke: new Stroke({ color: stroke, width: id === "roads" ? 3 : 2 }),
+      image: new CircleStyle({
+        radius: 4,
+        fill: new Fill({ color: "#39d0a1" }),
+        stroke: new Stroke({ color: "#06111d", width: 2 }),
+      }),
       text: new Text({
-        text: label,
-        font: "600 11px Inter, Arial, sans-serif",
+        text: name,
+        offsetY: -11,
+        font: "600 12px Inter, Arial, sans-serif",
         fill: new Fill({ color: "#ffffff" }),
         stroke: new Stroke({ color: "#06111d", width: 3 }),
         overflow: true,
-        placement: "line",
       }),
     });
   };
@@ -168,10 +81,10 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
     const labels = new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }), zIndex: 100, visible: basemap !== "streets" });
     labelsRef.current = labels;
     map.addLayer(labels);
-    const ids = ["boundaries", "states", "districts", "roads", "railways", "water", "landcover", "elevation", "population", "settlements", "airports", "health", "schools", "forest", "postal"];
+    const ids = ["places"];
     ids.forEach(id => {
       const source = id === "boundaries" ? editSource : new VectorSource({ features: new GeoJSON().readFeatures(thematicFeatures(id), { featureProjection: "EPSG:3857" }) });
-      const layer = new VectorLayer({ source, style: styleFor(id), visible: activeLayers.includes(id), zIndex: id === "boundaries" ? 20 : 10 });
+      const layer = new VectorLayer({ source, style: styleFor(id), visible: activeLayers.includes(id), zIndex: 20 });
       layerRefs.current[id] = layer;
       map.addLayer(layer);
     });

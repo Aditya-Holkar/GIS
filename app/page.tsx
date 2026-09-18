@@ -9,22 +9,7 @@ import {
 import MapView, { type Basemap } from "../components/MapView";
 
 const layers = [
-  { id: "osm", name: "OpenStreetMap", type: "Basemap", enabled: true, source: "OpenStreetMap" },
-  { id: "boundaries", name: "Administrative Boundaries", type: "Vector", enabled: true, source: "OpenStreetMap / India open data" },
-  { id: "states", name: "India States & UTs", type: "Vector", enabled: false, source: "Open data" },
-  { id: "districts", name: "India Districts", type: "Vector", enabled: false, source: "Open data" },
-  { id: "roads", name: "Road Network", type: "Vector", enabled: false, source: "OpenStreetMap" },
-  { id: "railways", name: "Railway Network", type: "Vector", enabled: false, source: "OpenStreetMap" },
-  { id: "water", name: "Rivers & Water Bodies", type: "Vector", enabled: false, source: "Natural Earth / OSM" },
-  { id: "landcover", name: "Land Cover / LULC", type: "Raster", enabled: false, source: "Bhuvan / Copernicus" },
-  { id: "elevation", name: "Elevation / Terrain", type: "Raster", enabled: false, source: "Survey of India / DEM" },
-  { id: "population", name: "Population Density", type: "Raster", enabled: false, source: "Census / open data" },
-  { id: "settlements", name: "Cities & Settlements", type: "Vector", enabled: false, source: "OSM / open data" },
-  { id: "airports", name: "Airports", type: "Vector", enabled: false, source: "Open data" },
-  { id: "health", name: "Health Facilities", type: "Vector", enabled: false, source: "data.gov.in" },
-  { id: "schools", name: "Schools & Education", type: "Vector", enabled: false, source: "Open government data" },
-  { id: "forest", name: "Forest / Vegetation", type: "Vector", enabled: false, source: "NIC / ISRO" },
-  { id: "postal", name: "Postal / PIN Boundaries", type: "Vector", enabled: false, source: "data.gov.in" },
+  { id: "places", name: "Places & Labels", type: "Vector", enabled: true, source: "OpenStreetMap" },
 ];
 
 const basemaps: Array<{id: Basemap; name: string; description: string; icon: typeof Globe2}> = [
@@ -59,7 +44,7 @@ const datasets = [
 export default function Home() {
   const [activeTool, setActiveTool] = useState("Explore");
   const [sidebar, setSidebar] = useState(true);
-  const [activeLayers, setActiveLayers] = useState(layers.map(l => l.id));
+  const [activeLayers, setActiveLayers] = useState(["places"]);
   const [view3d, setView3d] = useState(false);
   const [basemap, setBasemap] = useState<Basemap>("streets");
   const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");
