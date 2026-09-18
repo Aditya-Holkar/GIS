@@ -36,7 +36,7 @@ const basemaps: Array<{id: Basemap; name: string; description: string; icon: typ
   { id: "dark", name: "Dark", description: "Dark canvas", icon: Moon },
 ];
 
-const datasets = [
+const quickActions = [\n  { icon: Globe2, label: "Global data" },\n  { icon: Database, label: "Catalog" },\n  { icon: Ruler, label: "Measure" },\n  { icon: Activity, label: "Live layers" },\n];\n\nconst workspaceActions = [\n  { icon: Users, label: "Team & permissions" },\n  { icon: ShieldCheck, label: "Security & audit" },\n  { icon: FileDown, label: "Export / reports" },\n];\n\nconst datasets = [
   ["India Administrative Boundaries", "Vector", "12.4 MB", "Public"],
   ["Global Population 2025", "Raster", "1.8 GB", "Public"],
   ["Road Network — Maharashtra", "Vector", "84 MB", "Team"],
@@ -89,7 +89,7 @@ export default function Home() {
               <div className="mt-3 flex gap-2"><input className="flex-1 rounded-lg bg-[#081321] border border-[#203951] px-3 py-2 text-xs" placeholder="e.g. find high-density areas"/><button onClick={() => setMapMessage("Assistant queued spatial analysis") } className="rounded-lg bg-[#39d0a1] text-[#06111d] px-3"><Zap size={14}/></button></div>
             </section>
             <div className="grid grid-cols-2 gap-2">
-              {[[Globe2,"Global data"],[Database,"Catalog"],[Ruler,"Measure"],[Activity,"Live layers"]].map(([Icon,label]) => <button key={String(label)} className="rounded-xl border border-[#1e344d] bg-[#0d1b2b] p-3 text-left hover:border-[#315372]"><Icon size={17} className="text-[#4aa3ff]"/><div className="text-xs mt-2">{String(label)}</div></button>)}
+              {quickActions.map(action => { const Icon = action.icon; return <button key={action.label} className="rounded-xl border border-[#1e344d] bg-[#0d1b2b] p-3 text-left hover:border-[#315372]"><Icon size={17} className="text-[#4aa3ff]"/><div className="text-xs mt-2">{action.label}</div></button>; })}
             </div>
           </div>}
 
@@ -110,7 +110,7 @@ export default function Home() {
 
           <div className="p-4 border-t border-[#1e344d] mt-4">
             <div className="text-[10px] uppercase tracking-widest text-[#627a92] mb-2">Workspace</div>
-            {[[Users,"Team & permissions"],[ShieldCheck,"Security & audit"],[FileDown,"Export / reports"]].map(([Icon,label])=><button key={String(label)} className="w-full flex items-center gap-3 py-2 text-xs text-[#8ca1b5] hover:text-white"><Icon size={15}/>{String(label)}</button>)}
+            {workspaceActions.map(action => { const Icon = action.icon; return <button key={action.label} className="w-full flex items-center gap-3 py-2 text-xs text-[#8ca1b5] hover:text-white"><Icon size={15}/>{action.label}</button>; })}
           </div>
         </aside>}
 
