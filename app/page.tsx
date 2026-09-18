@@ -67,6 +67,7 @@ export default function Home() {
   };
 
   const loadLgd = useCallback(async (level: "districts" | "talukas" | "villages", code?: string) => {
+    setHierarchyLoading(true);
     const url = "/api/lgd?level=" + level + (code ? "&code=" + encodeURIComponent(code) : "");
     const response = await fetch(url);
     const payload = await response.json();
@@ -80,7 +81,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setHierarchyLoading(true);
     loadLgd("districts", "27")
       .then(setDistricts)
       .catch(() => setMapMessage("Maharashtra LGD service unavailable"))
@@ -88,9 +88,7 @@ export default function Home() {
   }, [loadLgd]);
 
   useEffect(() => {
-    if (!district) { setTalukas([]); setTaluka(""); return; }
-    setHierarchyLoading(true);
-    setTaluka(""); setVillage(""); setVillages([]); setGisCode("");
+    if (!district) return;
     loadLgd("talukas", district)
       .then(setTalukas)
       .catch(() => setMapMessage("Unable to load talukas from LGD"))
@@ -98,9 +96,7 @@ export default function Home() {
   }, [district, loadLgd]);
 
   useEffect(() => {
-    if (!taluka) { setVillages([]); setVillage(""); return; }
-    setHierarchyLoading(true);
-    setVillage(""); setGisCode("");
+    if (!taluka) return;
     loadLgd("villages", taluka)
       .then(setVillages)
       .catch(() => setMapMessage("Unable to load villages from LGD"))
