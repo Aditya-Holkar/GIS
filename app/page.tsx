@@ -67,7 +67,6 @@ export default function Home() {
   };
 
   const loadLgd = useCallback(async (level: "districts" | "talukas" | "villages", code?: string) => {
-    setHierarchyLoading(true);
     const url = "/api/lgd?level=" + level + (code ? "&code=" + encodeURIComponent(code) : "");
     const response = await fetch(url);
     const payload = await response.json();
