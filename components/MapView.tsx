@@ -113,6 +113,13 @@ export default function MapView({ activeLayers, view3d, basemap = "streets", cad
   }, [activeLayers]);
 
   useEffect(() => {
+    const source = cadastralRef.current?.getSource();
+    if (!source || !cadastralSelection?.gisCode) return;
+    source.updateParams({ state: "27", gis_code: cadastralSelection.gisCode, overlay_codes: "", LAYERS: "VILLAGE_MAP", STYLES: "VILLAGE_MAP", FORMAT: "image/png", TRANSPARENT: true, CRS: "EPSG:3857" });
+    source.refresh();
+  }, [cadastralSelection]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
