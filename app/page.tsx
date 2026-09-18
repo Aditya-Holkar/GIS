@@ -85,7 +85,7 @@ export default function Home() {
       .then(setDistricts)
       .catch(() => setMapMessage("Maharashtra LGD service unavailable"))
       .finally(() => setHierarchyLoading(false));
-  }, []);
+  }, [loadLgd]);
 
   useEffect(() => {
     if (!district) { setTalukas([]); setTaluka(""); return; }
@@ -95,7 +95,7 @@ export default function Home() {
       .then(setTalukas)
       .catch(() => setMapMessage("Unable to load talukas from LGD"))
       .finally(() => setHierarchyLoading(false));
-  }, [district]);
+  }, [district, loadLgd]);
 
   useEffect(() => {
     if (!taluka) { setVillages([]); setVillage(""); return; }
@@ -105,7 +105,7 @@ export default function Home() {
       .then(setVillages)
       .catch(() => setMapMessage("Unable to load villages from LGD"))
       .finally(() => setHierarchyLoading(false));
-  }, [taluka]);
+  }, [taluka, loadLgd]);
 
   const loadParcel = () => {
     const code = gisCode.trim() || verifiedBhuNaksha[village];
