@@ -80,14 +80,65 @@ function thematicFeatures(id: string) {
 function styleFor(id: string) {
   const point = ["settlements", "airports", "health", "schools"].includes(id);
   const line = ["roads", "railways", "water"].includes(id);
-  const fill = id === "population" ? "rgba(255,150,60,.20)" : id === "forest" ? "rgba(50,180,90,.22)" : id === "landcover" ? "rgba(190,170,70,.20)" : id === "elevation" ? "rgba(130,130,130,.16)" : "rgba(70,130,180,.10)";
-  const stroke = id === "roads" ? "#f0b35a" : id === "railways" ? "#d58cff" : id === "water" ? "#4aa3ff" : id === "forest" ? "#39d083" : "#39d0a1";
-  return new Style({
-    image: point ? new CircleStyle({ radius: id === "airports" ? 6 : 5, fill: new Fill({ color: stroke }), stroke: new Stroke({ color: "#06111d", width: 2 }) }) : undefined,
-    fill: line ? undefined : new Fill({ color: fill }),
-    stroke: new Stroke({ color: stroke, width: line ? (id === "roads" ? 3 : 2) : 1.5 }),
-    text: point ? new Text({ text: undefined }) : undefined,
-  });
+  const polygon = ["boundaries", "states", "districts", "postal", "landcover", "forest", "elevation", "population"].includes(id);
+
+  const stroke =
+    id === "roads" ? "#f0b35a" :
+    id === "railways" ? "#d58cff" :
+    id === "water" ? "#4aa3ff" :
+    id === "forest" ? "#39d083" :
+    "#39d0a1";
+
+  return (feature: any) => {
+    const name = String(feature.get("name") ?? "");
+    const value = feature.get("value");
+    const label = value !== undefined ? `${name} · ${value}` : name;
+
+    if (point) {
+      return new Style({
+        image: new CircleStyle({
+          radius: id === "airports" ? 6 : 5,
+          fill: new Fill({ color: stroke }),
+          stroke: new Stroke({ color: "#06111d", width: 2 }),
+        }),
+        text: new Text({
+          text: label,
+          offsetY: -12,
+          font: "600 12px Inter, Arial, sans-serif",
+          fill: new Fill({ color: "#ffffff" }),
+          stroke: new Stroke({ color: "#06111d", width: 3 }),
+          overflow: true,
+        }),
+      });
+    }
+
+    if (polygon) {
+      return new Style({
+        fill: undefined,
+        stroke: id === "boundaries" ? new Stroke({ color: "#8de7ff", width: 2 }) : undefined,
+        text: new Text({
+          text: label,
+          font: "600 11px Inter, Arial, sans-serif",
+          fill: new Fill({ color: "#ffffff" }),
+          stroke: new Stroke({ color: "#06111d", width: 3 }),
+          overflow: true,
+          placement: "point",
+        }),
+      });
+    }
+
+    return new Style({
+      stroke: new Stroke({ color: stroke, width: id === "roads" ? 3 : 2 }),
+      text: new Text({
+        text: label,
+        font: "600 11px Inter, Arial, sans-serif",
+        fill: new Fill({ color: "#ffffff" }),
+        stroke: new Stroke({ color: "#06111d", width: 3 }),
+        overflow: true,
+        placement: "line",
+      }),
+    });
+  };
 }
 
 function createBasemap(kind: Basemap) {
