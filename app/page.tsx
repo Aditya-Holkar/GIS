@@ -36,7 +36,20 @@ const basemaps: Array<{id: Basemap; name: string; description: string; icon: typ
   { id: "dark", name: "Dark", description: "Dark canvas", icon: Moon },
 ];
 
-const quickActions = [\n  { icon: Globe2, label: "Global data" },\n  { icon: Database, label: "Catalog" },\n  { icon: Ruler, label: "Measure" },\n  { icon: Activity, label: "Live layers" },\n];\n\nconst workspaceActions = [\n  { icon: Users, label: "Team & permissions" },\n  { icon: ShieldCheck, label: "Security & audit" },\n  { icon: FileDown, label: "Export / reports" },\n];\n\nconst datasets = [
+const quickActions = [
+  { icon: Globe2, label: "Global data" },
+  { icon: Database, label: "Catalog" },
+  { icon: Ruler, label: "Measure" },
+  { icon: Activity, label: "Live layers" },
+];
+
+const workspaceActions = [
+  { icon: Users, label: "Team & permissions" },
+  { icon: ShieldCheck, label: "Security & audit" },
+  { icon: FileDown, label: "Export / reports" },
+];
+
+const datasets = [
   ["India Administrative Boundaries", "Vector", "12.4 MB", "Public"],
   ["Global Population 2025", "Raster", "1.8 GB", "Public"],
   ["Road Network — Maharashtra", "Vector", "84 MB", "Team"],
