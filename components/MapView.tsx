@@ -10,17 +10,11 @@ import XYZ from "ol/source/XYZ";
 import TileWMS from "ol/source/TileWMS";
 import VectorSource from "ol/source/Vector";
 import type TileSource from "ol/source/Tile";
-import Draw from "ol/interaction/Draw";
-import Modify from "ol/interaction/Modify";
-import Select from "ol/interaction/Select";
-import Snap from "ol/interaction/Snap";
 import ScaleLine from "ol/control/ScaleLine";
 import Zoom from "ol/control/Zoom";
 import { fromLonLat } from "ol/proj";
-import { getLength } from "ol/sphere";
 import "ol/ol.css";
 
-type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
 
@@ -33,21 +27,17 @@ function createBasemap(kind: Basemap) {
   return new TileLayer({ source: new OSM({ attributions: "© OpenStreetMap contributors" }) });
 }
 
-export default function MapView({ activeLayers, view3d, tool = "select", basemap = "streets", onSelect, onMeasure }: { activeLayers: string[]; view3d: boolean; tool?: Tool; basemap?: Basemap; onSelect?: (name: string) => void; onMeasure?: (meters: number) => void }) {
+export default function MapView({ activeLayers, view3d, basemap = "streets" }: { activeLayers: string[]; view3d: boolean; basemap?: Basemap }) {
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const baseRef = useRef<TileLayer<TileSource> | null>(null);
   const labelsRef = useRef<TileLayer<TileSource> | null>(null);
   const cadastralRef = useRef<TileLayer<TileWMS> | null>(null);
   const layerRefs = useRef<Record<string, VectorLayer<VectorSource>>>({});
-  const editRef = useRef<VectorSource | null>(null);
-  const interactionsRef = useRef<Array<Draw | Select | Modify | Snap>>([]);
 
   useEffect(() => {
     const targetElement = target.current;
     if (!targetElement) return;
-    const editSource = new VectorSource();
-    editRef.current = editSource;
     const map = new Map({ target: targetElement, layers: [createBasemap(basemap)], controls: [new Zoom(), new ScaleLine()], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }) });
     baseRef.current = map.getLayers().item(0) as TileLayer<TileSource>;
     const labels = new TileLayer({
@@ -56,7 +46,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
         attributions: "© Esri",
       }),
       zIndex: 100,
-      visible: basemap === "satellite",
+      visible: activeLayers.includes("places"),
     });
     labelsRef.current = labels;
     map.addLayer(labels);
@@ -79,7 +69,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
       }),
       zIndex: 50,
       visible: activeLayers.includes("cadastral"),
-      minZoom: 11,
+      minZoom: 9,
       opacity: 0.9,
     });
     cadastralRef.current = cadastral;
@@ -92,12 +82,27 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
 
   useEffect(() => {
     Object.entries(layerRefs.current).forEach(([id, layer]) => layer.setVisible(activeLayers.includes(id)));
-    cadastralRef.current?.setVisible(activeLayers.includes("cadastral"));
+    labelsRef.current?.setVisible(activeLayers.includes("places"));
+
+    const cadastral = cadastralRef.current;
+    const map = mapRef.current;
+    if (!cadastral || !map) return;
+
+    const enabled = activeLayers.includes("cadastral");
+    cadastral.setVisible(enabled);
+
+    // The current real BhuNaksha WMS configuration is a Pune-area village map.
+    // When enabled, move the view to that source area so the user can immediately see it.
+    if (enabled && !activeLayers.includes("places")) {
+      map.getView().animate({
+        center: fromLonLat([73.8567, 18.5204]),
+        zoom: 12.5,
+        duration: 450,
+      });
+    }
   }, [activeLayers]);
 
   useEffect(() => {
-    const labels = labelsRef.current;
-    if (labels) labels.setVisible(basemap === "satellite");
     const map = mapRef.current;
     if (!map) return;
     const next = createBasemap(basemap);
