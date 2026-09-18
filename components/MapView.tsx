@@ -56,26 +56,35 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
     labelsRef.current = labels;
     map.addLayer(labels);
 
+    // Official Maharashtra BhuNaksha village-map WMS.
+    // The service expects the Maharashtra state code, village GIS code,
+    // VILLAGE_MAP layer and the EPSG:3857 map request parameters.
     const cadastral = new TileLayer({
       source: new TileWMS({
         url: "https://mahabhunakasha.mahabhumi.gov.in/WMS",
         params: {
           SERVICE: "WMS",
           VERSION: "1.3.0",
-          LAYERS: "VILLAGE_MAP",
-          STYLES: "VILLAGE_MAP",
+          REQUEST: "GetMap",
           FORMAT: "image/png",
           TRANSPARENT: true,
+          LAYERS: "VILLAGE_MAP",
+          STYLES: "VILLAGE_MAP",
           state: "27",
           gis_code: "RVM2507272500070311400000",
+          overlay_codes: "",
+          CRS: "EPSG:3857",
+          FORMAT_OPTIONS: "dpi:180",
         },
         serverType: "geoserver",
-        crossOrigin: "anonymous",
+        projection: "EPSG:3857",
+        transition: 0,
+        wrapX: false,
       }),
       zIndex: 50,
       visible: activeLayers.includes("cadastral"),
       minZoom: 9,
-      opacity: 0.9,
+      opacity: 0.95,
     });
     cadastralRef.current = cadastral;
     map.addLayer(cadastral);
@@ -95,20 +104,11 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
     labelsRef.current?.setVisible(activeLayers.includes("places"));
 
     const cadastral = cadastralRef.current;
-    const map = mapRef.current;
-    if (!cadastral || !map) return;
+    if (!cadastral) return;
 
-    const enabled = activeLayers.includes("cadastral");
-    cadastral.setVisible(enabled);
-
-    if (enabled && !cadastralEnabledRef.current) {
-      map.getView().animate({
-        center: fromLonLat([73.8567, 18.5204]),
-        zoom: 12.5,
-        duration: 450,
-      });
-    }
-    cadastralEnabledRef.current = enabled;
+    // Toggle the real WMS in place. Do not silently pan the user's map.
+    cadastral.setVisible(activeLayers.includes("cadastral"));
+    cadastralEnabledRef.current = activeLayers.includes("cadastral");
   }, [activeLayers]);
 
   useEffect(() => {
