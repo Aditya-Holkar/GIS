@@ -14,6 +14,7 @@ import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
 
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
+export type CadastralSelection = { gisCode: string; plotNo?: string };
 
 function createBasemap(kind: Basemap) {
   if (kind === "satellite") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
@@ -24,7 +25,7 @@ function createBasemap(kind: Basemap) {
   return new TileLayer({ source: new OSM({ attributions: "© OpenStreetMap contributors" }) });
 }
 
-export default function MapView({ activeLayers, view3d, basemap = "streets" }: { activeLayers: string[]; view3d: boolean; basemap?: Basemap }) {
+export default function MapView({ activeLayers, view3d, basemap = "streets", cadastralSelection }: { activeLayers: string[]; view3d: boolean; basemap?: Basemap; cadastralSelection?: CadastralSelection | null }) {
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const baseRef = useRef<TileLayer<TileSource> | null>(null);
