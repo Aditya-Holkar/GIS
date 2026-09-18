@@ -13,6 +13,8 @@ import Draw from "ol/interaction/Draw";
 import Modify from "ol/interaction/Modify";
 import Select from "ol/interaction/Select";
 import Snap from "ol/interaction/Snap";
+import ScaleLine from "ol/control/ScaleLine";
+import Zoom from "ol/control/Zoom";
 import { fromLonLat } from "ol/proj";
 import { getLength } from "ol/sphere";
 import { Fill, Stroke, Style, Circle as CircleStyle, Text } from "ol/style";
@@ -101,6 +103,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const baseRef = useRef<TileLayer<any> | null>(null);
+  const labelsRef = useRef<TileLayer<any> | null>(null);
   const layerRefs = useRef<Record<string, VectorLayer<VectorSource>>>({});
   const editRef = useRef<VectorSource | null>(null);
   const interactionsRef = useRef<Array<Draw | Select | Modify | Snap>>([]);
@@ -109,8 +112,11 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
     if (!target.current) return;
     const editSource = new VectorSource({ features: new GeoJSON().readFeatures(india, { featureProjection: "EPSG:3857" }) });
     editRef.current = editSource;
-    const map = new Map({ target: target.current, layers: [createBasemap(basemap)], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 4.6 }) });
+    const map = new Map({ target: target.current, layers: [createBasemap(basemap)], controls: [new Zoom(), new ScaleLine()], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }) });
     baseRef.current = map.getLayers().item(0) as TileLayer<any>;
+    const labels = new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }), zIndex: 100, visible: basemap !== "streets" });
+    labelsRef.current = labels;
+    map.addLayer(labels);
     const ids = ["boundaries", "states", "districts", "roads", "railways", "water", "landcover", "elevation", "population", "settlements", "airports", "health", "schools", "forest", "postal"];
     ids.forEach(id => {
       const source = id === "boundaries" ? editSource : new VectorSource({ features: new GeoJSON().readFeatures(thematicFeatures(id), { featureProjection: "EPSG:3857" }) });
@@ -178,7 +184,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
     return () => interactionsRef.current.forEach(i => map.removeInteraction(i));
   }, [tool, onSelect, onMeasure]);
 
-  useEffect(() => { mapRef.current?.getView().setZoom(view3d ? 3.2 : 4.6); }, [view3d]);
+  useEffect(() => { mapRef.current?.getView().setZoom(view3d ? 3.2 : 5.4); }, [view3d]);
 
   return <div ref={target} tabIndex={0} className="w-full h-full bg-[#07111f]" aria-label="Interactive GIS map" />;
 }
