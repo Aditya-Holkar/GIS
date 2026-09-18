@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import {
-  Activity, BarChart3, Box, Database, FileDown, Filter, Globe2, Layers3,
-  MapPinned, Menu, Ruler, Search, Settings2, ShieldCheck, Sparkles,
+  Activity, BarChart3, Box, Database, FileDown, Globe2, Layers3,
+  Menu, Search, Settings2, ShieldCheck, Sparkles,
   Upload, Users, X, Zap, Satellite, Mountain, Moon, Sun
 } from "lucide-react";
 import MapView, { type Basemap } from "../components/MapView";
@@ -25,7 +25,6 @@ const basemaps: Array<{id: Basemap; name: string; description: string; icon: typ
 const quickActions = [
   { icon: Globe2, label: "Global data" },
   { icon: Database, label: "Catalog" },
-  { icon: Ruler, label: "Measure" },
   { icon: Activity, label: "Live layers" },
 ];
 
@@ -48,7 +47,6 @@ export default function Home() {
   const [activeLayers, setActiveLayers] = useState<string[]>(["places"]);
   const [view3d, setView3d] = useState(false);
   const [basemap, setBasemap] = useState<Basemap>("streets");
-  const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");
   const [mapMessage, setMapMessage] = useState("Ready");
   const [search, setSearch] = useState("");
 
@@ -114,20 +112,9 @@ export default function Home() {
         </aside>}
 
         <section className="flex-1 relative min-w-0 map-shell">
-          <MapView activeLayers={activeLayers} view3d={view3d} basemap={basemap} tool={mapTool} onSelect={name => setMapMessage(`Selected: ${name}`)} onMeasure={meters => setMapMessage(`Measured: ${(meters / 1000).toFixed(2)} km`)}/>
+          <MapView activeLayers={activeLayers} view3d={view3d} basemap={basemap}/>
           <div className="absolute top-4 right-4 flex gap-1 rounded-xl border border-[#29435c] bg-[#091625]/95 p-1 shadow-xl">
             {basemaps.slice(0, 4).map(b => <button key={b.id} title={b.name} onClick={() => { setBasemap(b.id); setMapMessage("Basemap: " + b.name); }} className={"p-2 rounded-lg " + (basemap===b.id ? "bg-[#18334b] text-[#39d0a1]" : "hover:bg-[#13263c]")}><b.icon size={16}/></button>)}
-          </div>
-          <div className="absolute top-4 left-4 flex gap-2">
-            {["Select","Draw","Measure","Filter"].map((x,i) => {
-  const tool = i === 0 ? "select" : i === 1 ? "polygon" : i === 2 ? "measure" : "filter";
-  const Icon = i === 0 ? MapPinned : i === 1 ? Sparkles : i === 2 ? Ruler : Filter;
-  return (
-    <button key={x} onClick={() => setMapTool(tool as typeof mapTool)} className={`px-3 py-2 rounded-lg border bg-[#0b1726]/95 text-xs shadow-lg ${mapTool===tool ? "border-[#39d0a1] text-[#39d0a1]" : "border-[#29435c]"}`}>
-      <Icon size={13} className="inline mr-1"/>{x}
-    </button>
-  );
-})}
           </div>
           <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between pointer-events-none">
             <div className="pointer-events-auto rounded-xl border border-[#29435c] bg-[#091625]/95 p-3 text-[11px] shadow-xl"><div className="font-semibold">Map status</div><div className="text-[#7f96ad] mt-1">EPSG:3857 · {view3d ? "3D preview" : "2D"} · {activeLayers.length} layers active · {mapMessage}</div></div>
