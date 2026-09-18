@@ -4,9 +4,9 @@ import { useState } from "react";
 import {
   Activity, BarChart3, Box, Database, FileDown, Filter, Globe2, Layers3,
   MapPinned, Menu, Ruler, Search, Settings2, ShieldCheck, Sparkles,
-  Upload, Users, X, Zap
+  Upload, Users, X, Zap, Satellite, Mountain, Moon, Sun
 } from "lucide-react";
-import MapView from "../components/MapView";
+import MapView, { type Basemap } from "../components/MapView";
 
 const layers = [
   { id: "osm", name: "OpenStreetMap", type: "Basemap", enabled: true, source: "OpenStreetMap" },
@@ -27,6 +27,15 @@ const layers = [
   { id: "postal", name: "Postal / PIN Boundaries", type: "Vector", enabled: false, source: "data.gov.in" },
 ];
 
+const basemaps: Array<{id: Basemap; name: string; description: string; icon: typeof Globe2}> = [
+  { id: "streets", name: "Streets", description: "OpenStreetMap", icon: Globe2 },
+  { id: "satellite", name: "Satellite", description: "World imagery", icon: Satellite },
+  { id: "topographic", name: "Topo", description: "OSM + terrain", icon: Mountain },
+  { id: "terrain", name: "Terrain", description: "Physical relief", icon: Mountain },
+  { id: "light", name: "Light", description: "Minimal gray", icon: Sun },
+  { id: "dark", name: "Dark", description: "Dark canvas", icon: Moon },
+];
+
 const datasets = [
   ["India Administrative Boundaries", "Vector", "12.4 MB", "Public"],
   ["Global Population 2025", "Raster", "1.8 GB", "Public"],
@@ -38,7 +47,8 @@ export default function Home() {
   const [activeTool, setActiveTool] = useState("Explore");
   const [sidebar, setSidebar] = useState(true);
   const [activeLayers, setActiveLayers] = useState(layers.map(l => l.id));
-  const [view3d, setView3d] = useState(false);\n  const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");\n  const [mapMessage, setMapMessage] = useState("Ready");\n  const [search, setSearch] = useState("");
+  const [view3d, setView3d] = useState(false);
+  const [basemap, setBasemap] = useState<Basemap>("streets");\n  const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");\n  const [mapMessage, setMapMessage] = useState("Ready");\n  const [search, setSearch] = useState("");
 
   const toggleLayer = (id: string) =>
     setActiveLayers(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
@@ -82,6 +92,12 @@ export default function Home() {
 
           {activeTool === "Layers" && <div className="p-4 space-y-2">
             <div className="flex items-center justify-between mb-3"><span className="text-sm font-semibold">Map layers</span><button onClick={() => setMapMessage("Upload workflow ready — choose a GIS dataset") } className="text-xs text-[#39d0a1]"><Upload size={13} className="inline mr-1"/>Add</button></div>
+            <div className="rounded-xl border border-[#1e344d] bg-[#0d1b2b] p-3 mb-3">
+              <div className="text-[10px] uppercase tracking-widest text-[#6f879f] mb-2">Basemap</div>
+              <div className="grid grid-cols-2 gap-2">
+                {basemaps.map(b => { const Icon = b.icon; return <button key={b.id} onClick={() => { setBasemap(b.id); setMapMessage("Basemap: " + b.name); }} className={"flex items-center gap-2 rounded-lg border p-2 text-left " + (basemap===b.id ? "border-[#39d0a1] bg-[#123148]" : "border-[#203951] bg-[#081321]")}><Icon size={15} className={basemap===b.id ? "text-[#39d0a1]" : "text-[#6f879f]"}/><span className="min-w-0"><span className="block text-xs">{b.name}</span><span className="block text-[9px] text-[#71879d]">{b.description}</span></span></button>; })}
+              </div>
+            </div>
             {layers.map(l => <div key={l.id} className="flex items-center gap-3 p-3 rounded-xl border border-[#1b3046] bg-[#0d1b2b]"><input type="checkbox" checked={activeLayers.includes(l.id)} onChange={() => toggleLayer(l.id)} /><Layers3 size={16} className="text-[#4aa3ff]"/><div className="min-w-0 flex-1"><div className="text-xs truncate">{l.name}</div><div className="text-[10px] text-[#71879d]">{l.type} · {l.source}</div></div><span className="h-2 w-2 rounded-full bg-[#39d0a1]"/></div>)}
           </div>}
 
@@ -96,7 +112,10 @@ export default function Home() {
         </aside>}
 
         <section className="flex-1 relative min-w-0 map-shell">
-          <MapView activeLayers={activeLayers} view3d={view3d} tool={mapTool} onSelect={name => setMapMessage(`Selected: ${name}`)} onMeasure={meters => setMapMessage(`Measured: ${(meters / 1000).toFixed(2)} km`)}/>
+          <MapView activeLayers={activeLayers} view3d={view3d} basemap={basemap} tool={mapTool} onSelect={name => setMapMessage(`Selected: ${name}`)} onMeasure={meters => setMapMessage(`Measured: ${(meters / 1000).toFixed(2)} km`)}/>
+          <div className="absolute top-4 right-4 flex gap-1 rounded-xl border border-[#29435c] bg-[#091625]/95 p-1 shadow-xl">
+            {basemaps.slice(0, 4).map(b => <button key={b.id} title={b.name} onClick={() => { setBasemap(b.id); setMapMessage("Basemap: " + b.name); }} className={"p-2 rounded-lg " + (basemap===b.id ? "bg-[#18334b] text-[#39d0a1]" : "hover:bg-[#13263c]")}><b.icon size={16}/></button>)}
+          </div>
           <div className="absolute top-4 left-4 flex gap-2">
             {["Select","Draw","Measure","Filter"].map((x,i)=>{ const tool = i===0 ? "select" : i===1 ? "polygon" : i===2 ? "measure" : "filter"; return <button key={x} onClick={() => setMapTool(tool as typeof mapTool)} className={`px-3 py-2 rounded-lg border bg-[#0b1726]/95 text-xs shadow-lg ${mapTool===tool ? "border-[#39d0a1] text-[#39d0a1]" : "border-[#29435c]"}`}>{i===0 ? <MapPinned size={13} className="inline mr-1"/> : i===1 ? <Sparkles size={13} className="inline mr-1"/> : i===2 ? <Ruler size={13} className="inline mr-1"/> : <Filter size={13} className="inline mr-1"/>}{x}</button>)}
           </div>
