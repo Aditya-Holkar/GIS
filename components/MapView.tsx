@@ -15,7 +15,6 @@ import "ol/ol.css";
 
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
-
 function createBasemap(kind: Basemap) {
   if (kind === "satellite") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
   if (kind === "topographic") return new TileLayer({ source: new XYZ({ url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", attributions: "© OpenTopoMap contributors" }) });
@@ -36,8 +35,16 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
   useEffect(() => {
     const targetElement = target.current;
     if (!targetElement) return;
-    const map = new Map({ target: targetElement, layers: [createBasemap(basemap)], controls: [new Zoom(), new ScaleLine()], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }) });
+
+    const map = new Map({
+      target: targetElement,
+      layers: [createBasemap(basemap)],
+      controls: [new Zoom(), new ScaleLine()],
+      view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }),
+    });
+
     baseRef.current = map.getLayers().item(0) as TileLayer<TileSource>;
+
     const labels = new TileLayer({
       source: new XYZ({
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
@@ -73,7 +80,13 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
     cadastralRef.current = cadastral;
     map.addLayer(cadastral);
     mapRef.current = map;
-    return () => { map.setTarget(undefined); mapRef.current = null; };
+
+    return () => {
+      map.setTarget(undefined);
+      mapRef.current = null;
+      labelsRef.current = null;
+      cadastralRef.current = null;
+    };
   // Map is initialized once; layer visibility and basemap changes are handled by dedicated effects.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -88,8 +101,6 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
     const enabled = activeLayers.includes("cadastral");
     cadastral.setVisible(enabled);
 
-    // The current real BhuNaksha WMS configuration is a Pune-area village map.
-    // When enabled, move the view to that source area so the user can immediately see it.
     if (enabled && !cadastralEnabledRef.current) {
       map.getView().animate({
         center: fromLonLat([73.8567, 18.5204]),
@@ -103,6 +114,7 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
     const next = createBasemap(basemap);
     const old = baseRef.current;
     if (old) map.removeLayer(old);
@@ -111,47 +123,8 @@ export default function MapView({ activeLayers, view3d, basemap = "streets" }: {
   }, [basemap]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    const source = editRef.current;
-    if (!map || !source) return;
-    interactionsRef.current.forEach(i => map.removeInteraction(i));
-    interactionsRef.current = [];
-    const select = new Select();
-    select.on("select", e => { const f = e.selected[0]; if (f) onSelect?.(String(f.get("name") ?? "Selected feature")); });
-    map.addInteraction(select);
-    interactionsRef.current.push(select);
-    if (tool === "point" || tool === "line" || tool === "polygon" || tool === "measure") {
-      const type = tool === "point" ? "Point" : tool === "line" || tool === "measure" ? "LineString" : "Polygon";
-      const draw = new Draw({ source, type });
-      draw.on("drawend", e => {
-        if (tool === "measure") {
-          const geometry = e.feature.getGeometry();
-          if (geometry && "getCoordinates" in geometry) onMeasure?.(getLength(geometry as never, { projection: "EPSG:3857" }));
-          source.removeFeature(e.feature);
-        }
-      });
-      map.addInteraction(draw);
-      interactionsRef.current.push(draw);
-      const modify = new Modify({ source });
-      map.addInteraction(modify);
-      interactionsRef.current.push(modify);
-      const snap = new Snap({ source });
-      map.addInteraction(snap);
-      interactionsRef.current.push(snap);
-    }
-    if (tool === "filter") {
-      const handler = (event: MouseEvent) => {
-        const hits = map.getFeaturesAtPixel(map.getEventPixel(event));
-        if (hits.length) onSelect?.("Filtered: " + String(hits[0].get("name") ?? "feature"));
-      };
-      const targetElement = target.current;
-      targetElement?.addEventListener("click", handler);
-      return () => targetElement?.removeEventListener("click", handler);
-    }
-    return () => interactionsRef.current.forEach(i => map.removeInteraction(i));
-  }, [tool, onSelect, onMeasure]);
-
-  useEffect(() => { mapRef.current?.getView().setZoom(view3d ? 3.2 : 5.4); }, [view3d]);
+    mapRef.current?.getView().setZoom(view3d ? 3.2 : 5.4);
+  }, [view3d]);
 
   return <div ref={target} tabIndex={0} className="w-full h-full bg-[#07111f]" aria-label="Interactive GIS map" />;
 }
