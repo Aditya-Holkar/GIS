@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #07111f;
+  --panel: #0c1828;
+  --panel-2: #101f33;
+  --line: #1e344d;
+  --text: #e6eef8;
+  --muted: #8da2b8;
+  --accent: #39d0a1;
+  --blue: #4aa3ff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body { font-family: Arial, Helvetica, sans-serif; }
+button, input { font: inherit; }
+.map-shell .ol-control button {
+  background: #0b1726;
+  color: #e6eef8;
+  border: 1px solid #27415d;
+}
+.map-shell .ol-control button:hover { background: #13263c; }
+.ol-attribution { background: rgba(7,17,31,.8) !important; color: #8da2b8 !important; }
+.ol-attribution a { color: #8fc7ff !important; }
