@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return NextResponse.json({ error: "Supabase server configuration missing" }, { status: 503 });
   const auth = request.headers.get("authorization");
   if (!auth?.toLowerCase().startsWith("bearer ")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const expiresIn = Math.max(60, Math.min(body.expiresIn ?? 3600, 86400));
   const path = body.path.split("/").map(encodeURIComponent).join("/");
   const response = await fetch(`${url}/storage/v1/object/sign/gis-datasets/${path}`, {
-    method: "POST", headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    method: "POST", headers: { apikey: key, Authorization: auth, "Content-Type": "application/json" },
     body: JSON.stringify({ expiresIn }), cache: "no-store",
   });
   const text = await response.text(); let data: unknown; try { data = JSON.parse(text); } catch { data = { raw: text }; }
