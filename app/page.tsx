@@ -10,6 +10,7 @@ import MapView, { type Basemap } from "../components/MapView";
 
 const layers = [
   { id: "places", name: "Places & Labels", type: "Vector", enabled: true, source: "OpenStreetMap" },
+  { id: "cadastral", name: "Land Parcels / Cadastral", type: "WMS", enabled: false, source: "Maharashtra BhuNaksha" },
 ];
 
 const basemaps: Array<{id: Basemap; name: string; description: string; icon: typeof Globe2}> = [
@@ -44,7 +45,7 @@ const datasets = [
 export default function Home() {
   const [activeTool, setActiveTool] = useState("Explore");
   const [sidebar, setSidebar] = useState(true);
-  const [activeLayers, setActiveLayers] = useState(["places"]);
+  const [activeLayers, setActiveLayers] = useState<string[]>(["places"]);
   const [view3d, setView3d] = useState(false);
   const [basemap, setBasemap] = useState<Basemap>("streets");
   const [mapTool, setMapTool] = useState<"select" | "point" | "line" | "polygon" | "measure" | "filter">("select");
