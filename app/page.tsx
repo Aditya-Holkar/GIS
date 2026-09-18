@@ -133,7 +133,15 @@ export default function Home() {
             {basemaps.slice(0, 4).map(b => <button key={b.id} title={b.name} onClick={() => { setBasemap(b.id); setMapMessage("Basemap: " + b.name); }} className={"p-2 rounded-lg " + (basemap===b.id ? "bg-[#18334b] text-[#39d0a1]" : "hover:bg-[#13263c]")}><b.icon size={16}/></button>)}
           </div>
           <div className="absolute top-4 left-4 flex gap-2">
-            {["Select","Draw","Measure","Filter"].map((x,i)=>{ const tool = i===0 ? "select" : i===1 ? "polygon" : i===2 ? "measure" : "filter"; return <button key={x} onClick={() => setMapTool(tool as typeof mapTool)} className={`px-3 py-2 rounded-lg border bg-[#0b1726]/95 text-xs shadow-lg ${mapTool===tool ? "border-[#39d0a1] text-[#39d0a1]" : "border-[#29435c]"}`}>{i===0 ? <MapPinned size={13} className="inline mr-1"/> : i===1 ? <Sparkles size={13} className="inline mr-1"/> : i===2 ? <Ruler size={13} className="inline mr-1"/> : <Filter size={13} className="inline mr-1"/>}{x}</button>)}
+            {["Select","Draw","Measure","Filter"].map((x,i) => {
+  const tool = i === 0 ? "select" : i === 1 ? "polygon" : i === 2 ? "measure" : "filter";
+  const Icon = i === 0 ? MapPinned : i === 1 ? Sparkles : i === 2 ? Ruler : Filter;
+  return (
+    <button key={x} onClick={() => setMapTool(tool as typeof mapTool)} className={`px-3 py-2 rounded-lg border bg-[#0b1726]/95 text-xs shadow-lg ${mapTool===tool ? "border-[#39d0a1] text-[#39d0a1]" : "border-[#29435c]"}`}>
+      <Icon size={13} className="inline mr-1"/>{x}
+    </button>
+  );
+})}
           </div>
           <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between pointer-events-none">
             <div className="pointer-events-auto rounded-xl border border-[#29435c] bg-[#091625]/95 p-3 text-[11px] shadow-xl"><div className="font-semibold">Map status</div><div className="text-[#7f96ad] mt-1">EPSG:3857 · {view3d ? "3D preview" : "2D"} · {activeLayers.length} layers active · {mapMessage}</div></div>
