@@ -8,6 +8,7 @@ import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
 import VectorSource from "ol/source/Vector";
+import type XYZSource from "ol/source/XYZ";
 import Draw from "ol/interaction/Draw";
 import Modify from "ol/interaction/Modify";
 import Select from "ol/interaction/Select";
@@ -21,9 +22,6 @@ import "ol/ol.css";
 type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
-function styleFor() {
-  return undefined;
-}
 
 function createBasemap(kind: Basemap) {
   if (kind === "satellite") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
@@ -37,7 +35,7 @@ function createBasemap(kind: Basemap) {
 export default function MapView({ activeLayers, view3d, tool = "select", basemap = "streets", onSelect, onMeasure }: { activeLayers: string[]; view3d: boolean; tool?: Tool; basemap?: Basemap; onSelect?: (name: string) => void; onMeasure?: (meters: number) => void }) {
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
-  const baseRef = useRef<TileLayer<any> | null>(null);
+  const baseRef = useRef<TileLayer<XYZSource> | null>(null);
   const labelsRef = useRef<TileLayer<any> | null>(null);
   const layerRefs = useRef<Record<string, VectorLayer<VectorSource>>>({});
   const editRef = useRef<VectorSource | null>(null);
