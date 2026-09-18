@@ -7,13 +7,15 @@ import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
+import XYZ from "ol/source/XYZ";
+import TileArcGISRest from "ol/source/TileArcGISRest";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Draw from "ol/interaction/Draw";
 import Modify from "ol/interaction/Modify";
 import Select from "ol/interaction/Select";
 import Snap from "ol/interaction/Snap";
-import { fromLonLat, toLonLat } from "ol/proj";
+import { fromLonLat } from "ol/proj";
 import { getLength } from "ol/sphere";
 import { Fill, Stroke, Style, Circle as CircleStyle } from "ol/style";
 import "ol/ol.css";
@@ -29,12 +31,23 @@ const india = {
 } as const;
 
 type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
+export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
+
+function createBasemap(kind: Basemap) {
+  if (kind === "satellite") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
+  if (kind === "topographic") return new TileLayer({ source: new XYZ({ url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", attributions: "© OpenTopoMap contributors" }) });
+  if (kind === "terrain") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer", attributions: "© Esri" }) });
+  if (kind === "light") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer", attributions: "© Esri" }) });
+  if (kind === "dark") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer", attributions: "© Esri" }) });
+  return new TileLayer({ source: new OSM({ attributions: "© OpenStreetMap contributors" }) });
+}
 
 export default function MapView({
-  activeLayers, view3d, tool = "select", onSelect, onMeasure,
-}: { activeLayers: string[]; view3d: boolean; tool?: Tool; onSelect?: (name: string) => void; onMeasure?: (meters: number) => void }) {
+  activeLayers, view3d, tool = "select", basemap = "streets", onSelect, onMeasure,
+}: { activeLayers: string[]; view3d: boolean; tool?: Tool; basemap?: Basemap; onSelect?: (name: string) => void; onMeasure?: (meters: number) => void }) {
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  const baseRef = useRef<TileLayer<OSM | XYZ | TileArcGISRest> | null>(null);
   const vectorRef = useRef<VectorLayer<VectorSource> | null>(null);
   const editRef = useRef<VectorSource | null>(null);
   const interactionsRef = useRef<Array<Draw | Select | Modify | Snap>>([]);
@@ -48,30 +61,35 @@ export default function MapView({
       fill: new Fill({ color: "rgba(57,208,161,.12)" }), stroke: new Stroke({ color: "#39d0a1", width: 2 }),
     }) });
     vectorRef.current = vector;
-    const map = new Map({ target: target.current, layers: [new TileLayer({ source: new OSM() }), vector], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 4.6 }) });
+    const base = createBasemap(basemap);
+    baseRef.current = base;
+    const map = new Map({ target: target.current, layers: [base, vector], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 4.6 }) });
     mapRef.current = map;
-    const select = new Select();
-    select.on("select", e => {
-      const feature = e.selected[0];
-      if (feature) onSelect?.(String(feature.get("name") ?? "Selected feature"));
-    });
-    map.addInteraction(select);
-    interactionsRef.current.push(select);
     return () => { map.setTarget(undefined); mapRef.current = null; };
-  }, [onSelect]);
+  // The map is initialized once; basemap changes are handled by the dedicated effect below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { vectorRef.current?.setVisible(activeLayers.includes("boundaries")); }, [activeLayers]);
 
   useEffect(() => {
-    vectorRef.current?.setVisible(activeLayers.includes("boundaries"));
-  }, [activeLayers]);
+    const map = mapRef.current;
+    if (!map) return;
+    const next = createBasemap(basemap);
+    const old = baseRef.current;
+    if (old) map.removeLayer(old);
+    map.getLayers().insertAt(0, next);
+    baseRef.current = next;
+  }, [basemap]);
 
   useEffect(() => {
     const map = mapRef.current;
     const source = editRef.current;
     if (!map || !source) return;
-    interactionsRef.current.filter(i => i !== undefined).forEach(i => map.removeInteraction(i));
+    interactionsRef.current.forEach(i => map.removeInteraction(i));
     interactionsRef.current = [];
     const select = new Select();
-    select.on("select", e => { const f=e.selected[0]; if(f) onSelect?.(String(f.get("name") ?? "Selected feature")); });
+    select.on("select", e => { const f = e.selected[0]; if (f) onSelect?.(String(f.get("name") ?? "Selected feature")); });
     map.addInteraction(select); interactionsRef.current.push(select);
     if (tool === "point" || tool === "line" || tool === "polygon" || tool === "measure") {
       const type = tool === "point" ? "Point" : tool === "line" || tool === "measure" ? "LineString" : "Polygon";
@@ -89,8 +107,7 @@ export default function MapView({
     }
     if (tool === "filter") {
       const handler = (event: MouseEvent) => {
-        const pixel = map.getEventPixel(event);
-        const hits = map.getFeaturesAtPixel(pixel);
+        const hits = map.getFeaturesAtPixel(map.getEventPixel(event));
         if (hits.length) onSelect?.("Filtered: " + String(hits[0].get("name") ?? "feature"));
       };
       target.current?.addEventListener("click", handler);
