@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const RPC_MAP = {
-  view: "features_in_view",
-  nearby: "nearby_features",
-  distance: "feature_distance",
+  view: "gis_features_in_view",
+  nearby: "gis_nearby_features",
+  distance: "gis_feature_distance",
 } as const;
 
 type Operation = keyof typeof RPC_MAP;
