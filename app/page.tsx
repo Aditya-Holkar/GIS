@@ -4,12 +4,12 @@ import { useState } from "react";
 import {
   Activity, BarChart3, Box, Database, FileDown, Globe2, Layers3,
   Menu, Search, Settings2, ShieldCheck, Sparkles,
-  Upload, Users, X, Zap, Satellite, Mountain, Moon, Sun
+  Upload, Users, X, Zap, Satellite, Mountain, Moon, Sun, MapPinned
 } from "lucide-react";
 import MapView, { type Basemap, type CadastralSelection } from "../components/MapView";
 
 const layers = [
-  { id: "places", name: "Places & Labels", type: "Vector", enabled: true, source: "OpenStreetMap" },
+  { id: "places", name: "Places & Labels", type: "Raster tile", enabled: true, source: "Esri World Boundaries & Places" },
   { id: "cadastral", name: "Land Parcels / Cadastral", type: "WMS", enabled: false, source: "Maharashtra BhuNaksha" },
 ];
 
