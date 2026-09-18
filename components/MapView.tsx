@@ -7,6 +7,7 @@ import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
+import TileWMS from "ol/source/TileWMS";
 import VectorSource from "ol/source/Vector";
 import type TileSource from "ol/source/Tile";
 import Draw from "ol/interaction/Draw";
@@ -37,6 +38,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
   const mapRef = useRef<Map | null>(null);
   const baseRef = useRef<TileLayer<TileSource> | null>(null);
   const labelsRef = useRef<TileLayer<TileSource> | null>(null);
+  const cadastralRef = useRef<TileLayer<TileWMS> | null>(null);
   const layerRefs = useRef<Record<string, VectorLayer<VectorSource>>>({});
   const editRef = useRef<VectorSource | null>(null);
   const interactionsRef = useRef<Array<Draw | Select | Modify | Snap>>([]);
@@ -58,6 +60,30 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
     });
     labelsRef.current = labels;
     map.addLayer(labels);
+
+    const cadastral = new TileLayer({
+      source: new TileWMS({
+        url: "https://mahabhunakasha.mahabhumi.gov.in/WMS",
+        params: {
+          SERVICE: "WMS",
+          VERSION: "1.3.0",
+          LAYERS: "VILLAGE_MAP",
+          STYLES: "VILLAGE_MAP",
+          FORMAT: "image/png",
+          TRANSPARENT: true,
+          state: "27",
+          gis_code: "RVM2507272500070311400000",
+        },
+        serverType: "geoserver",
+        crossOrigin: "anonymous",
+      }),
+      zIndex: 50,
+      visible: activeLayers.includes("cadastral"),
+      minZoom: 11,
+      opacity: 0.9,
+    });
+    cadastralRef.current = cadastral;
+    map.addLayer(cadastral);
     mapRef.current = map;
     return () => { map.setTarget(undefined); mapRef.current = null; layerRefs.current = {}; };
   // Map is initialized once; layer visibility and basemap changes are handled by dedicated effects.
@@ -66,6 +92,7 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
 
   useEffect(() => {
     Object.entries(layerRefs.current).forEach(([id, layer]) => layer.setVisible(activeLayers.includes(id)));
+    cadastralRef.current?.setVisible(activeLayers.includes("cadastral"));
   }, [activeLayers]);
 
   useEffect(() => {
