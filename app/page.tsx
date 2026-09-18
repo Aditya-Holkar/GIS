@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity, BarChart3, Box, Database, FileDown, Globe2, Layers3,
   Menu, Search, Settings2, ShieldCheck, Sparkles,
@@ -49,29 +49,70 @@ export default function Home() {
   const [basemap, setBasemap] = useState<Basemap>("streets");
   const [mapMessage, setMapMessage] = useState("Ready");
   const [search, setSearch] = useState("");
+  type LgdItem = { code: string; name: string; localName?: string };
   const [district, setDistrict] = useState("");
   const [taluka, setTaluka] = useState("");
   const [village, setVillage] = useState("");
   const [plot, setPlot] = useState("");
   const [gisCode, setGisCode] = useState("");
   const [cadastralSelection, setCadastralSelection] = useState<CadastralSelection | null>(null);
+  const [districts, setDistricts] = useState<LgdItem[]>([]);
+  const [talukas, setTalukas] = useState<LgdItem[]>([]);
+  const [villages, setVillages] = useState<LgdItem[]>([]);
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
 
-  const puneTalukas = [
-    ["07", "Haveli"], ["05", "Maval"], ["03", "Shirur"], ["12", "Bhor"],
-    ["02", "Baramati"], ["04", "Daund"], ["06", "Indapur"], ["08", "Junnar"],
-    ["09", "Khed"], ["10", "Mulshi"], ["11", "Purandar"], ["01", "Ambegaon"],
-    ["13", "Velhe"], ["14", "Pune City"]
-  ];
-  const villagesByTaluka: Record<string, Array<[string,string]>> = {
-    "07": [["272500070311400000", "Yevlewadi"]],
-    "03": [["272500030304860000", "Burunjwadi"]],
-    "05": [["272500050309140000", "Diwad"]],
-    "12": [["272500120315390000", "Tambhad"]]
+  const verifiedBhuNaksha: Record<string, string> = {
+    "272500070311400000": "RVM2507272500070311400000",
+    "272500030304860000": "RVM2507272500030486000000",
+    "272500050309140000": "RVM2507272500050914000000",
+    "272500120315390000": "RVM2507272500121539000000",
   };
+
+  const loadLgd = async (level: "districts" | "talukas" | "villages", code?: string) => {
+    const url = "/api/lgd?level=" + level + (code ? "&code=" + encodeURIComponent(code) : "");
+    const response = await fetch(url);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "LGD request failed");
+    const raw = Array.isArray(payload.data) ? payload.data : [];
+    return raw.map((item: Record<string, unknown>) => ({
+      code: String(item.districtCode ?? item.subdistrictCode ?? item.villageCode ?? ""),
+      name: String(item.districtNameEnglish ?? item.subdistrictNameEnglish ?? item.villageNameEnglish ?? ""),
+      localName: String(item.districtNameLocal ?? item.subdistrictNameLocal ?? item.villageNameLocal ?? ""),
+    })).filter((item: LgdItem) => item.code && item.name);
+  };
+
+  useEffect(() => {
+    setHierarchyLoading(true);
+    loadLgd("districts", "27")
+      .then(setDistricts)
+      .catch(() => setMapMessage("Maharashtra LGD service unavailable"))
+      .finally(() => setHierarchyLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!district) { setTalukas([]); setTaluka(""); return; }
+    setHierarchyLoading(true);
+    setTaluka(""); setVillage(""); setVillages([]); setGisCode("");
+    loadLgd("talukas", district)
+      .then(setTalukas)
+      .catch(() => setMapMessage("Unable to load talukas from LGD"))
+      .finally(() => setHierarchyLoading(false));
+  }, [district]);
+
+  useEffect(() => {
+    if (!taluka) { setVillages([]); setVillage(""); return; }
+    setHierarchyLoading(true);
+    setVillage(""); setGisCode("");
+    loadLgd("villages", taluka)
+      .then(setVillages)
+      .catch(() => setMapMessage("Unable to load villages from LGD"))
+      .finally(() => setHierarchyLoading(false));
+  }, [taluka]);
+
   const loadParcel = () => {
-    const code = village || gisCode.trim();
+    const code = gisCode.trim() || verifiedBhuNaksha[village];
     if (!code) {
-      setMapMessage("Select a village or enter an official BhuNaksha GIS code");
+      setMapMessage("Village is connected to LGD, but its official BhuNaksha GIS code has not been resolved yet. Enter the official GIS code in Advanced.");
       return;
     }
     setCadastralSelection({ gisCode: code, plotNo: plot.trim() || undefined });
@@ -129,15 +170,15 @@ export default function Home() {
             </div>
             <section className="rounded-2xl border border-[#1e344d] bg-[#0d1b2b] p-3 mb-3">
               <div className="text-sm font-semibold flex items-center gap-2"><MapPinned size={15} className="text-[#39d0a1]"/> Cadastral Explorer</div>
-              <p className="text-[10px] text-[#71879d] mt-1 leading-4">District → Taluka → Village → Survey / Plot. No synthetic parcel geometry is generated.</p>
+              <p className="text-[10px] text-[#71879d] mt-1 leading-4">District → Taluka → Village → Survey / Plot. Districts, talukas and villages come from the government LGD service. No synthetic parcel geometry is generated.</p>
               <div className="grid gap-2 mt-3">
-                <select value={district} onChange={e => { setDistrict(e.target.value); setTaluka(""); setVillage(""); setGisCode(""); }} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs"><option value="">District</option>{["522:Ahilyanagar","501:Akola","503:Amravati","515:Chhatrapati Sambhajinagar","523:Beed","506:Bhandara","500:Buldhana","509:Chandrapur","498:Dhule","508:Gadchiroli","507:Gondia","512:Hingoli","499:Jalgaon","514:Jalna","530:Kolhapur","524:Latur","519:Mumbai","518:Mumbai Suburban","505:Nagpur","511:Nanded","497:Nandurbar","516:Nashik","525:Dharashiv","513:Parbhani","521:Pune","520:Raigad","528:Ratnagiri","531:Sangli","527:Satara","529:Sindhudurg","526:Solapur","517:Thane","504:Wardha","502:Washim","510:Yavatmal","665:Palghar"].map(x => { const [id,name]=x.split(":"); return <option key={id} value={id}>{name}</option>; })}</select>
-                <select value={taluka} onChange={e => { setTaluka(e.target.value); setVillage(""); setGisCode(""); }} disabled={district !== "521"} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs disabled:opacity-50"><option value="">{district === "521" ? "Taluka" : "Taluka master not connected yet"}</option>{puneTalukas.map(([id,name]) => <option key={id} value={id}>{name}</option>)}</select>
-                <select value={village} onChange={e => { setVillage(e.target.value); setGisCode(e.target.value); }} disabled={!taluka || !(villagesByTaluka[taluka] || []).length} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs disabled:opacity-50"><option value="">{(villagesByTaluka[taluka] || []).length ? "Village" : "Connected village not loaded"}</option>{(villagesByTaluka[taluka] || []).map(([id,name]) => <option key={id} value={id}>{name}</option>)}</select>
+                <select value={district} onChange={e => setDistrict(e.target.value)} disabled={hierarchyLoading && !districts.length} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs disabled:opacity-50"><option value="">{hierarchyLoading && !districts.length ? "Loading districts…" : "District"}</option>{districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}</select>
+                <select value={taluka} onChange={e => setTaluka(e.target.value)} disabled={!district || hierarchyLoading} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs disabled:opacity-50"><option value="">{district ? (hierarchyLoading ? "Loading talukas…" : "Taluka") : "Select district first"}</option>{talukas.map(t => <option key={t.code} value={t.code}>{t.name}</option>)}</select>
+                <select value={village} onChange={e => { setVillage(e.target.value); setGisCode(verifiedBhuNaksha[e.target.value] || ""); }} disabled={!taluka || hierarchyLoading} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs disabled:opacity-50"><option value="">{taluka ? (hierarchyLoading ? "Loading villages…" : "Village") : "Select taluka first"}</option>{villages.map(v => <option key={v.code} value={v.code}>{v.name}</option>)}</select>
                 <input value={plot} onChange={e => setPlot(e.target.value)} className="w-full rounded-lg border border-[#203951] bg-[#081321] p-2 text-xs" placeholder="Survey / Plot number (e.g. 40)" />
                 <details className="rounded-lg border border-[#203951] bg-[#081321] p-2"><summary className="text-[10px] text-[#7890a7] cursor-pointer">Advanced: BhuNaksha GIS code</summary><input value={gisCode} onChange={e => setGisCode(e.target.value)} className="mt-2 w-full rounded-lg border border-[#203951] bg-[#0d1b2b] p-2 text-xs font-mono" placeholder="18-digit GIS code" /></details>
                 <button onClick={loadParcel} className="w-full rounded-lg bg-[#39d0a1] text-[#06111d] py-2 text-xs font-semibold">Load parcel map</button>
-                {village && plot && <a target="_blank" rel="noreferrer" href={"https://mahabhunakasha.mahabhumi.gov.in/signplotreportpublic.jsp?giscode="+encodeURIComponent(village)+"&plotno="+encodeURIComponent(plot)+"&state=27"} className="text-[10px] text-[#55b7ff] text-center hover:underline">Open official BhuNaksha plot report ↗</a>}
+                {gisCode && plot && <a target="_blank" rel="noreferrer" href={"https://mahabhunakasha.mahabhumi.gov.in/signplotreportpublic.jsp?giscode="+encodeURIComponent(gisCode)+"&plotno="+encodeURIComponent(plot)+"&state=27"} className="text-[10px] text-[#55b7ff] text-center hover:underline">Open official BhuNaksha plot report ↗</a>}
               </div>
             </section>
             {layers.map(l => <button type="button" key={l.id} onClick={() => toggleLayer(l.id)} className={"w-full flex items-center gap-3 p-3 rounded-xl border text-left transition " + (activeLayers.includes(l.id) ? "border-[#39d0a1] bg-[#123148]" : "border-[#1b3046] bg-[#0d1b2b] hover:border-[#315372]")}><span className={"h-4 w-4 rounded border grid place-items-center shrink-0 " + (activeLayers.includes(l.id) ? "border-[#39d0a1] bg-[#39d0a1]" : "border-[#50657a]")} aria-hidden="true">{activeLayers.includes(l.id) ? <span className="h-1.5 w-1.5 rounded-full bg-[#06111d]"/> : null}</span><Layers3 size={16} className={activeLayers.includes(l.id) ? "text-[#39d0a1]" : "text-[#4aa3ff]"}/><div className="min-w-0 flex-1"><div className="text-xs truncate">{l.name}</div><div className="text-[10px] text-[#71879d]">{l.type} · {l.source}</div></div><span className={"h-2 w-2 rounded-full " + (activeLayers.includes(l.id) ? "bg-[#39d0a1]" : "bg-[#50657a]")}/></button>)}
