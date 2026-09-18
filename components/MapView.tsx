@@ -8,7 +8,6 @@ import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
 import VectorSource from "ol/source/Vector";
-import GeoJSON from "ol/format/GeoJSON";
 import Draw from "ol/interaction/Draw";
 import Modify from "ol/interaction/Modify";
 import Select from "ol/interaction/Select";
@@ -17,41 +16,13 @@ import ScaleLine from "ol/control/ScaleLine";
 import Zoom from "ol/control/Zoom";
 import { fromLonLat } from "ol/proj";
 import { getLength } from "ol/sphere";
-import { Fill, Stroke, Style, Circle as CircleStyle, Text } from "ol/style";
 import "ol/ol.css";
-
-const india = {
-  type: "FeatureCollection",
-  features: [
-    { type: "Feature", geometry: { type: "Point", coordinates: [73.8567, 18.5204] }, properties: { name: "Pune" } },
-    { type: "Feature", geometry: { type: "Point", coordinates: [72.8777, 19.076] }, properties: { name: "Mumbai" } },
-    { type: "Feature", geometry: { type: "Point", coordinates: [77.5946, 12.9716] }, properties: { name: "Bengaluru" } },
-    { type: "Feature", geometry: { type: "Point", coordinates: [77.1025, 28.7041] }, properties: { name: "Delhi" } },
-  ],
-} as const;
 
 type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
-function styleFor(id: string) {
-  return (feature: any) => {
-    const name = String(feature.get("name") ?? "");
-    return new Style({
-      image: new CircleStyle({
-        radius: 4,
-        fill: new Fill({ color: "#39d0a1" }),
-        stroke: new Stroke({ color: "#06111d", width: 2 }),
-      }),
-      text: new Text({
-        text: name,
-        offsetY: -11,
-        font: "600 12px Inter, Arial, sans-serif",
-        fill: new Fill({ color: "#ffffff" }),
-        stroke: new Stroke({ color: "#06111d", width: 3 }),
-        overflow: true,
-      }),
-    });
-  };
+function styleFor() {
+  return undefined;
 }
 
 function createBasemap(kind: Basemap) {
@@ -74,20 +45,13 @@ export default function MapView({ activeLayers, view3d, tool = "select", basemap
 
   useEffect(() => {
     if (!target.current) return;
-    const editSource = new VectorSource({ features: new GeoJSON().readFeatures(india, { featureProjection: "EPSG:3857" }) });
+    const editSource = new VectorSource();
     editRef.current = editSource;
     const map = new Map({ target: target.current, layers: [createBasemap(basemap)], controls: [new Zoom(), new ScaleLine()], view: new View({ center: fromLonLat([78.9629, 22.5937]), zoom: 5.4, minZoom: 3, maxZoom: 19 }) });
     baseRef.current = map.getLayers().item(0) as TileLayer<any>;
     const labels = new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }), zIndex: 100, visible: basemap !== "streets" });
     labelsRef.current = labels;
     map.addLayer(labels);
-    const ids = ["places"];
-    ids.forEach(id => {
-      const source = id === "boundaries" ? editSource : new VectorSource({ features: new GeoJSON().readFeatures(thematicFeatures(id), { featureProjection: "EPSG:3857" }) });
-      const layer = new VectorLayer({ source, style: styleFor(id), visible: activeLayers.includes(id), zIndex: 20 });
-      layerRefs.current[id] = layer;
-      map.addLayer(layer);
-    });
     mapRef.current = map;
     return () => { map.setTarget(undefined); mapRef.current = null; layerRefs.current = {}; };
   // Map is initialized once; layer visibility and basemap changes are handled by dedicated effects.
