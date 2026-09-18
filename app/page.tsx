@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Activity, BarChart3, Box, Database, FileDown, Globe2, Layers3,
   Menu, Search, Settings2, ShieldCheck, Sparkles,
@@ -66,7 +66,7 @@ export default function Home() {
 
   };
 
-  const loadLgd = async (level: "districts" | "talukas" | "villages", code?: string) => {
+  const loadLgd = useCallback(async (level: "districts" | "talukas" | "villages", code?: string) => {
     const url = "/api/lgd?level=" + level + (code ? "&code=" + encodeURIComponent(code) : "");
     const response = await fetch(url);
     const payload = await response.json();
