@@ -8,7 +8,6 @@ import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
-import TileArcGISRest from "ol/source/TileArcGISRest";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import Draw from "ol/interaction/Draw";
@@ -34,11 +33,11 @@ type Tool = "select" | "point" | "line" | "polygon" | "measure" | "filter";
 export type Basemap = "streets" | "satellite" | "topographic" | "terrain" | "light" | "dark";
 
 function createBasemap(kind: Basemap) {
-  if (kind === "satellite") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
+  if (kind === "satellite") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri, Maxar, Earthstar Geographics, and the GIS User Community" }) });
   if (kind === "topographic") return new TileLayer({ source: new XYZ({ url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", attributions: "© OpenTopoMap contributors" }) });
-  if (kind === "terrain") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer", attributions: "© Esri" }) });
-  if (kind === "light") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer", attributions: "© Esri" }) });
-  if (kind === "dark") return new TileLayer({ source: new TileArcGISRest({ url: "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer", attributions: "© Esri" }) });
+  if (kind === "terrain") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }) });
+  if (kind === "light") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }) });
+  if (kind === "dark") return new TileLayer({ source: new XYZ({ url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", attributions: "© Esri" }) });
   return new TileLayer({ source: new OSM({ attributions: "© OpenStreetMap contributors" }) });
 }
 
@@ -47,7 +46,7 @@ export default function MapView({
 }: { activeLayers: string[]; view3d: boolean; tool?: Tool; basemap?: Basemap; onSelect?: (name: string) => void; onMeasure?: (meters: number) => void }) {
   const target = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
-  const baseRef = useRef<TileLayer<OSM | XYZ | TileArcGISRest> | null>(null);
+  const baseRef = useRef<TileLayer<any> | null>(null);
   const vectorRef = useRef<VectorLayer<VectorSource> | null>(null);
   const editRef = useRef<VectorSource | null>(null);
   const interactionsRef = useRef<Array<Draw | Select | Modify | Snap>>([]);
