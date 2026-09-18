@@ -9,10 +9,22 @@ import {
 import MapView from "../components/MapView";
 
 const layers = [
-  { id: "osm", name: "OpenStreetMap", type: "Basemap", enabled: true },
-  { id: "boundaries", name: "Administrative Boundaries", type: "Vector", enabled: true },
-  { id: "population", name: "Population Density", type: "Raster", enabled: false },
-  { id: "roads", name: "Road Network", type: "Vector", enabled: false },
+  { id: "osm", name: "OpenStreetMap", type: "Basemap", enabled: true, source: "OpenStreetMap" },
+  { id: "boundaries", name: "Administrative Boundaries", type: "Vector", enabled: true, source: "OpenStreetMap / India open data" },
+  { id: "states", name: "India States & UTs", type: "Vector", enabled: false, source: "Open data" },
+  { id: "districts", name: "India Districts", type: "Vector", enabled: false, source: "Open data" },
+  { id: "roads", name: "Road Network", type: "Vector", enabled: false, source: "OpenStreetMap" },
+  { id: "railways", name: "Railway Network", type: "Vector", enabled: false, source: "OpenStreetMap" },
+  { id: "water", name: "Rivers & Water Bodies", type: "Vector", enabled: false, source: "Natural Earth / OSM" },
+  { id: "landcover", name: "Land Cover / LULC", type: "Raster", enabled: false, source: "Bhuvan / Copernicus" },
+  { id: "elevation", name: "Elevation / Terrain", type: "Raster", enabled: false, source: "Survey of India / DEM" },
+  { id: "population", name: "Population Density", type: "Raster", enabled: false, source: "Census / open data" },
+  { id: "settlements", name: "Cities & Settlements", type: "Vector", enabled: false, source: "OSM / open data" },
+  { id: "airports", name: "Airports", type: "Vector", enabled: false, source: "Open data" },
+  { id: "health", name: "Health Facilities", type: "Vector", enabled: false, source: "data.gov.in" },
+  { id: "schools", name: "Schools & Education", type: "Vector", enabled: false, source: "Open government data" },
+  { id: "forest", name: "Forest / Vegetation", type: "Vector", enabled: false, source: "NIC / ISRO" },
+  { id: "postal", name: "Postal / PIN Boundaries", type: "Vector", enabled: false, source: "data.gov.in" },
 ];
 
 const datasets = [
@@ -70,7 +82,7 @@ export default function Home() {
 
           {activeTool === "Layers" && <div className="p-4 space-y-2">
             <div className="flex items-center justify-between mb-3"><span className="text-sm font-semibold">Map layers</span><button onClick={() => setMapMessage("Upload workflow ready — choose a GIS dataset") } className="text-xs text-[#39d0a1]"><Upload size={13} className="inline mr-1"/>Add</button></div>
-            {layers.map(l => <div key={l.id} className="flex items-center gap-3 p-3 rounded-xl border border-[#1b3046] bg-[#0d1b2b]"><input type="checkbox" checked={activeLayers.includes(l.id)} onChange={() => toggleLayer(l.id)} /><Layers3 size={16} className="text-[#4aa3ff]"/><div className="min-w-0 flex-1"><div className="text-xs truncate">{l.name}</div><div className="text-[10px] text-[#71879d]">{l.type}</div></div><span className="h-2 w-2 rounded-full bg-[#39d0a1]"/></div>)}
+            {layers.map(l => <div key={l.id} className="flex items-center gap-3 p-3 rounded-xl border border-[#1b3046] bg-[#0d1b2b]"><input type="checkbox" checked={activeLayers.includes(l.id)} onChange={() => toggleLayer(l.id)} /><Layers3 size={16} className="text-[#4aa3ff]"/><div className="min-w-0 flex-1"><div className="text-xs truncate">{l.name}</div><div className="text-[10px] text-[#71879d]">{l.type} · {l.source}</div></div><span className="h-2 w-2 rounded-full bg-[#39d0a1]"/></div>)}
           </div>}
 
           {activeTool === "Data" && <div className="p-4"><div className="flex gap-2 mb-3"><button className="flex-1 rounded-lg bg-[#18334b] py-2 text-xs"><Database size={13} className="inline mr-1"/>Catalog</button><button className="rounded-lg border border-[#29435c] px-3"><Upload size={13}/></button></div>{datasets.map(d => <div key={d[0]} className="border-b border-[#1a2e43] py-3"><div className="text-xs font-medium">{d[0]}</div><div className="text-[10px] text-[#72889e] mt-1">{d[1]} · {d[2]} · {d[3]}</div></div>)}</div>}
