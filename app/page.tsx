@@ -63,9 +63,7 @@ export default function Home() {
 
   const verifiedBhuNaksha: Record<string, string> = {
     "272500070311400000": "RVM2507272500070311400000",
-    "272500030304860000": "RVM2507272500030486000000",
-    "272500050309140000": "RVM2507272500050914000000",
-    "272500120315390000": "RVM2507272500121539000000",
+
   };
 
   const loadLgd = async (level: "districts" | "talukas" | "villages", code?: string) => {
